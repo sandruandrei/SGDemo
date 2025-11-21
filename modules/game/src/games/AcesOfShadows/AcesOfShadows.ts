@@ -65,7 +65,7 @@ export class AcesOfShadows extends AbstractGame {
 
             this.fastButton.on(isMobile() ? `pointerdown` : `click`, () => {
                 if (this.gameTimeline && this.gameTimeline.isActive()) {
-                    this.gameTimeline.timeScale(20);
+                    this.gameTimeline.timeScale(10);
                 }
 
                 this.fastButton.eventMode = "passive";
