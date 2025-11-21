@@ -32,12 +32,7 @@ window.addEventListener("load", () => {
             <div style="width: 100px; height: 100px; border: 6px solid rgba(255, 255, 255, 0.3); border-top: 6px solid white; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
             <h1 style="margin-top: -88px;">Loading...</h1>
         </div>
-        <style>
-            @keyframes spin {
-                from { transform: rotate(0deg); }
-                to { transform: rotate(360deg); }
-            }
-        </style>
+       
     `;
     document.body.appendChild(loadingDiv);
 });
