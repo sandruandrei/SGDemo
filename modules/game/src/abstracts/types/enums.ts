@@ -71,7 +71,7 @@ export enum SvgName {
 }
 
 export enum VideoNames {
-    INTRO_SCREEN = `introScreen`,
+    // INTRO_SCREEN = `introScreen`,
     // do not remove
     NONE = `NONE`
 }

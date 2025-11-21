@@ -1,4 +1,4 @@
-import {FontsNames, GameName, GameState, ImageName, SoundNames, SvgName, VideoNames} from "./types/enums";
+import {FontsNames, GameName, GameState, ImageName, SoundNames, SvgName} from "./types/enums";
 import {GameConfig, IGameState} from "./types/interfaces";
 import {AssetManifest, BackgroundManifest} from "./types/types";
 
@@ -56,7 +56,6 @@ export const assetsConfig: AssetManifest = {
     },
     spritesheets: {},
     videos: {
-        [VideoNames.INTRO_SCREEN]: `/videos/intro.mp4`
     },
     audio: {
         [SoundNames.GAME1]: `/sounds/game1.mp3`,
