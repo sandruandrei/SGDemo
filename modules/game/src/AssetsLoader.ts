@@ -8,6 +8,7 @@ class AssetsLoader {
     private static instance: AssetsLoader;
     private manifest?: AssetManifest;
     private isLoading = false;
+    private basePath: string = '';
 
     // Asset storage maps
     private readonly assets = {
@@ -35,7 +36,9 @@ class AssetsLoader {
     };
 
     private constructor() {
-        this.logWithStyle(`Initialized`);
+        // Get base path from Vite's import.meta.env
+        this.basePath = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+        this.logWithStyle(`Initialized with base path: ${this.basePath}`);
     }
 
     public static getInstance(): AssetsLoader {
@@ -113,11 +116,12 @@ class AssetsLoader {
 
     private async loadAudioFiles(): Promise<void> {
         const loadPromises = Array.from(this.assets.audio.entries()).map(async ([key, path]) => {
-            this.logWithStyle(`Loading audio "${key}" from ${path}`);
+            const fullPath = this.getFullPath(path);
+            this.logWithStyle(`Loading audio "${key}" from ${fullPath}`);
             try {
                 await new Promise<void>((resolve, reject) => {
                     const sound = new Howl({
-                        src: [path],
+                        src: [fullPath],
                         preload: true,
                         autoplay: false,
                         onload: () => {
@@ -127,7 +131,7 @@ class AssetsLoader {
                         },
                         onloaderror: (_, err) => {
                             this.logError(`Failed to load audio "${key}"`, err);
-                            reject(new Error(`Failed to load audio: ${path}`));
+                            reject(new Error(`Failed to load audio: ${fullPath}`));
                         }
                     });
                 });
@@ -192,16 +196,17 @@ class AssetsLoader {
 
     private async loadVideos(): Promise<void> {
         const promises = Array.from(this.assets.videos.entries()).map(async ([key, path]) => {
-            this.logWithStyle(`Loading video "${key}" from ${path}`);
+            const fullPath = this.getFullPath(path);
+            this.logWithStyle(`Loading video "${key}" from ${fullPath}`);
             const video = document.createElement(`video`);
-            video.src = path;
+            video.src = fullPath;
             video.loop = true;
             video.muted = true;
             video.playsInline = true;
 
             await new Promise((resolve, reject) => {
                 video.onloadeddata = () => resolve(true);
-                video.onerror = () => reject(new Error(`Failed to load video: ${path}`));
+                video.onerror = () => reject(new Error(`Failed to load video: ${fullPath}`));
             });
 
             this.loaded.videos.set(key, video);
@@ -211,9 +216,10 @@ class AssetsLoader {
 
     private async loadSvgs(): Promise<void> {
         const promises = Array.from(this.assets.svgs.entries()).map(async ([key, path]) => {
-            this.logWithStyle(`Loading SVG "${key}" from ${path}`);
+            const fullPath = this.getFullPath(path);
+            this.logWithStyle(`Loading SVG "${key}" from ${fullPath}`);
             try {
-                const response = await fetch(path);
+                const response = await fetch(fullPath);
                 const svgString = await response.text();
                 const svgResource = new SVGResource(svgString);
                 const baseTexture = new BaseTexture(svgResource);
@@ -229,9 +235,10 @@ class AssetsLoader {
 
     private async loadFonts(): Promise<void> {
         const ttfPromises = Array.from(this.assets.fonts.ttf.entries()).map(async ([key, path]) => {
-            this.logWithStyle(`Loading TTF font "${key}" from ${path}`);
+            const fullPath = this.getFullPath(path);
+            this.logWithStyle(`Loading TTF font "${key}" from ${fullPath}`);
             try {
-                const fontFace = new FontFace(key, `url(${path})`);
+                const fontFace = new FontFace(key, `url(${fullPath})`);
                 await fontFace.load();
                 document.fonts.add(fontFace);
                 this.loaded.fonts.ttf.set(key, fontFace);
@@ -243,10 +250,11 @@ class AssetsLoader {
 
         const bitmapPromises = Array.from(this.assets.fonts.bitmap.entries()).map(
             async ([key, path]) => {
-                this.logWithStyle(`Loading bitmap font "${key}" from ${path}`);
+                const fullPath = this.getFullPath(path);
+                this.logWithStyle(`Loading bitmap font "${key}" from ${fullPath}`);
                 try {
-                    await Assets.load(path);
-                    const texture = Assets.get(path);
+                    await Assets.load(fullPath);
+                    const texture = Assets.get(fullPath);
                     this.loaded.fonts.bitmap.set(key, texture);
                 } catch (err) {
                     this.logError(`Failed to load bitmap font "${key}"`, err);
@@ -353,6 +361,15 @@ class AssetsLoader {
             `color: orange; background-color: black; font-weight: bold;`,
             ...args
         );
+    }
+
+    private getFullPath(path: string): string {
+        // If path is already absolute (starts with http:// or https://), return as is
+        if (path.startsWith('http://') || path.startsWith('https://')) {
+            return path;
+        }
+        // Prepend base path for relative paths
+        return this.basePath + path;
     }
 
     private logAssetCounts(): void {
