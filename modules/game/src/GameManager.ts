@@ -242,6 +242,21 @@ export class GameManager implements IGameManager {
 
         this.app.stage.addChild(this.modules.sound);
 
+        const handleFullscreenResize = () => {
+            resizeCanvas();
+        };
+
+        // Listen to all fullscreen change events (including vendor-prefixed)
+        document.addEventListener("fullscreenchange", handleFullscreenResize);
+        document.addEventListener("webkitfullscreenchange", handleFullscreenResize);
+        document.addEventListener("mozfullscreenchange", handleFullscreenResize);
+        document.addEventListener("MSFullscreenChange", handleFullscreenResize);
+
+        // Handle orientation changes on mobile
+        window.addEventListener("orientationchange", () => {
+            setTimeout(handleFullscreenResize, 100);
+        });
+
         canvas.addEventListener(
             "pointerdown",
             () => {
@@ -253,14 +268,33 @@ export class GameManager implements IGameManager {
         function goFullscreen() {
             const el = document.documentElement;
 
-            if (el.requestFullscreen) el.requestFullscreen();
-            else if ((el as any).webkitRequestFullscreen) (el as any).webkitRequestFullscreen();
-            else if ((el as any).msRequestFullscreen) (el as any).msRequestFullscreen();
+            // Try standard fullscreen API
+            if (el.requestFullscreen) {
+                el.requestFullscreen().catch((err) => {
+                    console.log("Fullscreen request failed:", err);
+                });
+            }
+            // Webkit (Safari, older Chrome/Android)
+            else if ((el as any).webkitRequestFullscreen) {
+                (el as any).webkitRequestFullscreen();
+            }
+            // Older Webkit (iOS Safari)
+            else if ((el as any).webkitEnterFullscreen) {
+                (el as any).webkitEnterFullscreen();
+            }
+            // IE/Edge
+            else if ((el as any).msRequestFullscreen) {
+                (el as any).msRequestFullscreen();
+            }
+            // Mozilla
+            else if ((el as any).mozRequestFullScreen) {
+                (el as any).mozRequestFullScreen();
+            }
+            // Fallback for iOS: try to use canvas element directly
+            else if ((canvas as any).webkitEnterFullscreen) {
+                (canvas as any).webkitEnterFullscreen();
+            }
         }
-
-        document.addEventListener("fullscreenchange", () => {
-            app.renderer.resize(window.innerWidth, window.innerHeight);
-        });
     }
 
     protected getAssetsConfig() {

@@ -30,7 +30,7 @@ window.addEventListener("load", () => {
     loadingDiv.innerHTML = `
         <div style="position: absolute; text-align: center; color: white; font-size: 8px; font-family: sans-serif">
             <div style="width: 100px; height: 100px; border: 6px solid rgba(255, 255, 255, 0.3); border-top: 6px solid white; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
-            <h1 style="margin-top: -88px;">Loading...</h1>
+            <h1 style="margin-top: -84px;">Loading...</h1>
         </div>
        
     `;
