@@ -9,7 +9,7 @@ export class UILoader extends Sprite {
     constructor() {
         super(assetsLoader.getTexture(ImageName.LOADER));
         this.scale.set(0.5);
-        this.anchor.set(0.5, 1);
+        this.anchor.set(0.5);
     }
 
     public start(): void {

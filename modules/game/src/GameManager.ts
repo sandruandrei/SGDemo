@@ -134,6 +134,11 @@ export class GameManager implements IGameManager {
     }
 
     protected async createPixiApp(): Promise<void> {
+        const loadingDiv = document.getElementById("loading");
+        if (loadingDiv) {
+            loadingDiv.remove();
+        }
+
         console.log(`%cGameManager: Creating Pixi app`, this.getConsoleLogStyle());
 
         Program.defaultFragmentPrecision = PIXI.PRECISION.HIGH;
@@ -147,7 +152,6 @@ export class GameManager implements IGameManager {
         canvasParent.style.position = "absolute";
         canvasParent.style.height = "100%";
         canvasParent.style.width = "100%";
-        document.body.style.margin = "0px";
 
         // ! aici verific din cauza ca se creeaza 2 canvasuri cand e cu React
         const existingCanvas = document.getElementById(`pixi-canvas`);
