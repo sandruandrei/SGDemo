@@ -1,15 +1,12 @@
 import {Container, Graphics} from "pixi.js";
 import {gameConfig} from "../config.ts";
-import {GameName} from "../types/enums.ts";
 import {SoundButton} from "./buttons/SoundButton.ts";
 import {MenuDropdown} from "./dropdowns/MenuDropdown.ts";
-import {GameModeField} from "./fields/GameModeField.ts";
 
 export abstract class Menu extends Container {
     protected menuBg!: Graphics;
     protected soundBtn!: SoundButton;
     protected menuDropdown!: MenuDropdown;
-    protected fpsField!: GameModeField;
 
     constructor() {
         super();
@@ -20,15 +17,8 @@ export abstract class Menu extends Container {
     }
 
     private createFields(): void {
-        this.fpsField = new GameModeField(GameName.ACE_OF_SHADOWS);
-        this.addChild(this.fpsField);
-
         this.menuDropdown = new MenuDropdown();
         this.addChild(this.menuDropdown);
-    }
-
-    public updateGameMode(value: string): void {
-        this.fpsField.value = value;
     }
 
     private createBackground(): void {

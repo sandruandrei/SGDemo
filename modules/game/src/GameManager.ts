@@ -1,5 +1,6 @@
 import * as PIXI from "pixi.js";
 import {Application, BaseTexture, Program} from "pixi.js";
+import {Stats} from "pixi-stats";
 import {assetsLoader} from "./AssetsLoader.ts";
 import {
     assetsConfig,
@@ -161,6 +162,10 @@ export class GameManager implements IGameManager {
 
         const app = new Application(config);
         this.app = app;
+
+        app.ticker.minFPS = 60;
+
+        new Stats(app.renderer, app.ticker, canvasParent);
 
         const canvas = app.view as HTMLCanvasElement;
         canvas.id = `pixi-canvas`;

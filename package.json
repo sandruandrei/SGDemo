@@ -3,17 +3,20 @@
     "version": "1.0.0",
     "private": true,
     "type": "module",
-    "workspaces": ["modules/*"],
+    "workspaces": [
+        "modules/*"
+    ],
     "scripts": {
         "start": "cd modules/game && npm run dev",
         "kill": "taskkill /F /IM node.exe"
     },
     "devDependencies": {
+        "@biomejs/biome": "^2.2.4",
         "typescript": "5.9.3",
-        "vite": "7.2.2",
-        "@biomejs/biome": "^2.2.4"
+        "vite": "7.2.2"
     },
     "dependencies": {
-        "@fastify/cors": "^10.0.2"
+        "@fastify/cors": "^10.0.2",
+        "pixi-stats": "^5.0.3"
     }
 }
