@@ -352,6 +352,34 @@ export class GameManager implements IGameManager {
             );
             // Trigger resize when entering/exiting fullscreen
             setTimeout(() => resizeCallback(), 100);
+            
+            // Re-enable fullscreen trigger when exiting fullscreen (both mobile and desktop)
+            if (!isFullscreen()) {
+                console.log(
+                    `%cGameManager: Exited fullscreen - re-enabling fullscreen trigger`,
+                    this.getConsoleLogStyle()
+                );
+                // Re-add listeners for next fullscreen request
+                const initiateFullscreen = () => {
+                    if (!isFullscreen()) {
+                        console.log(
+                            `%cGameManager: Interaction - requesting fullscreen`,
+                            this.getConsoleLogStyle()
+                        );
+                        requestFullscreen();
+                    }
+                };
+                if (isMobile) {
+                    element.addEventListener("touchstart", initiateFullscreen, {
+                        once: true,
+                        capture: true
+                    });
+                }
+                element.addEventListener("click", initiateFullscreen, {
+                    once: true,
+                    capture: true
+                });
+            }
         };
 
         document.addEventListener("fullscreenchange", handleFullscreenChange);
@@ -371,35 +399,28 @@ export class GameManager implements IGameManager {
             .matchMedia("(orientation: portrait)")
             .addEventListener("change", handleOrientationChange);
 
-        // For mobile: immediately request fullscreen on first touch/click
-        if (isMobile) {
-            const initiateFullscreen = () => {
+        // Immediately request fullscreen on first interaction (both mobile and desktop)
+        const initiateFullscreen = () => {
+            if (!isFullscreen()) {
                 console.log(
-                    `%cGameManager: Mobile first interaction - requesting fullscreen`,
+                    `%cGameManager: First interaction - requesting fullscreen (${isMobile ? "mobile" : "desktop"})`,
                     this.getConsoleLogStyle()
                 );
                 requestFullscreen();
-            };
+            }
+        };
 
-            // Use capture phase to ensure we catch it first
+        // Use capture phase to ensure we catch it first
+        if (isMobile) {
             element.addEventListener("touchstart", initiateFullscreen, {
                 once: true,
                 capture: true
             });
-            element.addEventListener("click", initiateFullscreen, { once: true, capture: true });
         }
-
-        // For desktop: single-click to toggle fullscreen
-        if (!isMobile) {
-            element.addEventListener("click", (e: MouseEvent) => {
-                e.preventDefault();
-                console.log(
-                    `%cGameManager: Click detected - toggling fullscreen`,
-                    this.getConsoleLogStyle()
-                );
-                toggleFullscreen();
-            });
-        }
+        element.addEventListener("click", initiateFullscreen, {
+            once: true,
+            capture: true
+        });
 
         // Store reference for potential external access
         (globalThis as any).__TOGGLE_FULLSCREEN__ = toggleFullscreen;
