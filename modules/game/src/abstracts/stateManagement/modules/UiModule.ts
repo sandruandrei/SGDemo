@@ -1,5 +1,3 @@
-import {signalsManager} from "../../signals/SignalsManager.ts";
-import {GameName, SignalNames} from "../../types/enums.ts";
 import {Menu} from "../../ui/Menu.ts";
 import {AbstractModule} from "./AbstractModule";
 
@@ -25,13 +23,7 @@ export class UiModule extends AbstractModule {
         console.log(`%c${this.getModuleName()} module initialized`, this.getConsoleLogStyle());
     }
 
-    protected setupSignalHandlers(): void {
-        const { menu } = this;
-
-        signalsManager.on(SignalNames.GAME_CHANGED, (gameMode: GameName) => {
-            menu.updateGameMode(gameMode);
-        });
-    }
+    protected setupSignalHandlers(): void {}
 
     protected getModuleName(): string {
         return `UiModule`;
