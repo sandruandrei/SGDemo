@@ -289,9 +289,57 @@ export class GameManager implements IGameManager {
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
             navigator.userAgent
         );
+        const isIOSUserAgent = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+        // Check if Fullscreen API is actually supported
+        const supportsFullscreen = !!(
+            element.requestFullscreen ||
+            (element as any).webkitRequestFullscreen ||
+            (element as any).mozRequestFullScreen ||
+            (element as any).msRequestFullscreen
+        );
+
+        // Use iOS-specific handling only if on iOS AND fullscreen API is not supported
+        const useIOSMode = isIOSUserAgent && !supportsFullscreen;
+
+        // Track iOS fullscreen state manually since real iOS doesn't support Fullscreen API
+        let iosFullscreenActive = false;
 
         // Request fullscreen function that works across browsers
         const requestFullscreen = () => {
+            // iOS Safari (real device) doesn't support Fullscreen API on regular elements
+            // Use viewport tricks to maximize screen space
+            if (useIOSMode) {
+                console.log(
+                    "iOS Safari detected - using viewport optimization (no Fullscreen API)"
+                );
+                iosFullscreenActive = true;
+
+                // Scroll to hide address bar
+                window.scrollTo(0, 1);
+
+                // Lock orientation if available
+                if (screen.orientation && (screen.orientation as any).lock) {
+                    (screen.orientation as any).lock("any").catch(() => {
+                        console.log("Orientation lock not supported");
+                    });
+                }
+
+                // Set viewport height to fill screen
+                document.documentElement.style.height = "100%";
+                document.body.style.height = "100%";
+                element.style.height = "100vh";
+
+                // Trigger resize after a short delay
+                setTimeout(() => {
+                    window.scrollTo(0, 1);
+                    resizeCallback();
+                }, 100);
+
+                return;
+            }
+
+            // Standard fullscreen for browsers that support it (including browser inspector)
             const elem = element;
 
             if (elem.requestFullscreen) {
@@ -299,7 +347,7 @@ export class GameManager implements IGameManager {
                     console.warn("Fullscreen request failed:", err);
                 });
             } else if ((elem as any).webkitRequestFullscreen) {
-                // iOS Safari and older webkit browsers
+                // Older webkit browsers
                 (elem as any).webkitRequestFullscreen();
             } else if ((elem as any).mozRequestFullScreen) {
                 // Firefox
@@ -327,6 +375,11 @@ export class GameManager implements IGameManager {
 
         // Check if already in fullscreen
         const isFullscreen = () => {
+            // For iOS without Fullscreen API, use our manual state tracker
+            if (useIOSMode) {
+                return iosFullscreenActive;
+            }
+            // For browsers with Fullscreen API (including emulated iOS in browser inspector)
             return !!(
                 document.fullscreenElement ||
                 (document as any).webkitFullscreenElement ||
@@ -352,9 +405,14 @@ export class GameManager implements IGameManager {
             );
             // Trigger resize when entering/exiting fullscreen
             setTimeout(() => resizeCallback(), 100);
-            
+
             // Re-enable fullscreen trigger when exiting fullscreen (both mobile and desktop)
             if (!isFullscreen()) {
+                // Reset iOS state if using iOS mode
+                if (useIOSMode) {
+                    iosFullscreenActive = false;
+                }
+
                 console.log(
                     `%cGameManager: Exited fullscreen - re-enabling fullscreen trigger`,
                     this.getConsoleLogStyle()
@@ -403,7 +461,7 @@ export class GameManager implements IGameManager {
         const initiateFullscreen = () => {
             if (!isFullscreen()) {
                 console.log(
-                    `%cGameManager: First interaction - requesting fullscreen (${isMobile ? "mobile" : "desktop"})`,
+                    `%cGameManager: First interaction - requesting fullscreen (${useIOSMode ? "iOS Safari" : isMobile ? "mobile" : "desktop"})`,
                     this.getConsoleLogStyle()
                 );
                 requestFullscreen();
@@ -425,8 +483,29 @@ export class GameManager implements IGameManager {
         // Store reference for potential external access
         (globalThis as any).__TOGGLE_FULLSCREEN__ = toggleFullscreen;
 
+        // iOS-specific: add event listeners to keep address bar hidden
+        if (useIOSMode) {
+            window.addEventListener("scroll", () => {
+                if (window.scrollY === 0) {
+                    window.scrollTo(0, 1);
+                }
+            });
+
+            // Hide address bar on orientation change
+            window.addEventListener("orientationchange", () => {
+                setTimeout(() => {
+                    window.scrollTo(0, 1);
+                }, 100);
+            });
+
+            // Initial scroll to hide address bar
+            setTimeout(() => {
+                window.scrollTo(0, 1);
+            }, 300);
+        }
+
         console.log(
-            `%cGameManager: Fullscreen setup complete (${isMobile ? "mobile" : "desktop"} mode)`,
+            `%cGameManager: Fullscreen setup complete (${useIOSMode ? "iOS Safari" : isMobile ? "mobile" : "desktop"} mode)`,
             this.getConsoleLogStyle()
         );
     }
