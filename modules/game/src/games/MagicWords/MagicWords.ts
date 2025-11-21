@@ -127,11 +127,12 @@ export class MagicWords extends AbstractGame {
                 name: "neutral"
             } as EmojiData);
 
+
             return Promise.resolve(data);
         };
 
         fetchData().then((data) => {
-            data.dialogue.forEach((dialog, dialogIndex) => {
+            data.dialogue.forEach((dialog) => {
                 let avatar = avatarsMap.get(dialog.name)!;
 
                 if (!avatar) {
