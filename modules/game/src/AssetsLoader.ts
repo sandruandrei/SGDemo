@@ -182,9 +182,10 @@ class AssetsLoader {
 
     private async loadImages(): Promise<void> {
         const promises = Array.from(this.assets.images.entries()).map(async ([key, path]) => {
-            this.logWithStyle(`Loading image "${key}" from ${path}`);
+            const fullPath = this.getFullPath(path);
+            this.logWithStyle(`Loading image "${key}" from ${fullPath}`);
             try {
-                const texture = await Assets.load(path);
+                const texture = await Assets.load(fullPath);
                 this.loaded.textures.set(key, texture);
             } catch (err) {
                 this.logError(`Failed to load image "${key}"`, err);
