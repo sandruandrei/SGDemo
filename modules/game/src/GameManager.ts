@@ -246,6 +246,10 @@ export class GameManager implements IGameManager {
             resizeCanvas();
         };
 
+        // Detect if we're on a mobile device
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+        
         // Listen to all fullscreen change events (including vendor-prefixed)
         document.addEventListener("fullscreenchange", handleFullscreenResize);
         document.addEventListener("webkitfullscreenchange", handleFullscreenResize);
@@ -257,6 +261,14 @@ export class GameManager implements IGameManager {
             setTimeout(handleFullscreenResize, 100);
         });
 
+        // Handle screen resize events for mobile browsers
+        let resizeTimeout: number;
+        window.addEventListener("resize", () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = window.setTimeout(handleFullscreenResize, 100);
+        });
+
+        // For mobile devices, attempt fullscreen on first interaction
         canvas.addEventListener(
             "pointerdown",
             () => {
@@ -266,21 +278,46 @@ export class GameManager implements IGameManager {
         );
 
         function goFullscreen() {
+            // For iOS devices, we can't use the Fullscreen API
+            // Instead, we rely on the viewport meta tags and CSS
+            if (isIOS) {
+                // Scroll to top to hide the address bar
+                window.scrollTo(0, 1);
+                setTimeout(() => window.scrollTo(0, 0), 0);
+                
+                // Try to lock orientation if available
+                if (screen.orientation && (screen.orientation as any).lock) {
+                    (screen.orientation as any).lock('landscape').catch(() => {
+                        // Orientation lock failed, continue anyway
+                    });
+                }
+                
+                // Force resize after attempting fullscreen
+                setTimeout(handleFullscreenResize, 100);
+                return;
+            }
+
+            // For Android and desktop browsers, try the Fullscreen API
             const el = document.documentElement;
 
             // Try standard fullscreen API
             if (el.requestFullscreen) {
                 el.requestFullscreen().catch((err) => {
                     console.log("Fullscreen request failed:", err);
+                    // Fallback for mobile: hide address bar
+                    if (isMobile) {
+                        window.scrollTo(0, 1);
+                        setTimeout(() => window.scrollTo(0, 0), 0);
+                    }
                 });
             }
             // Webkit (Safari, older Chrome/Android)
             else if ((el as any).webkitRequestFullscreen) {
-                (el as any).webkitRequestFullscreen();
-            }
-            // Older Webkit (iOS Safari)
-            else if ((el as any).webkitEnterFullscreen) {
-                (el as any).webkitEnterFullscreen();
+                try {
+                    (el as any).webkitRequestFullscreen();
+                } catch (err) {
+                    console.log("Webkit fullscreen failed:", err);
+                }
             }
             // IE/Edge
             else if ((el as any).msRequestFullscreen) {
@@ -290,9 +327,10 @@ export class GameManager implements IGameManager {
             else if ((el as any).mozRequestFullScreen) {
                 (el as any).mozRequestFullScreen();
             }
-            // Fallback for iOS: try to use canvas element directly
-            else if ((canvas as any).webkitEnterFullscreen) {
-                (canvas as any).webkitEnterFullscreen();
+            // Fallback: hide address bar on mobile
+            else if (isMobile) {
+                window.scrollTo(0, 1);
+                setTimeout(() => window.scrollTo(0, 0), 0);
             }
         }
     }
