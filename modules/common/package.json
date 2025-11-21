@@ -1,0 +1,19 @@
+{
+  "name": "@slot-game/common",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    "./*": "./src/*"
+  },
+  "scripts": {
+    "dev": "ts-node-dev --respawn src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}
