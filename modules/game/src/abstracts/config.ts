@@ -64,8 +64,6 @@ export const assetsConfig: AssetManifest = {
         [SoundNames.GAME3]: `/sounds/game3.mp3`
     },
     svgs: {
-        [SvgName.BONUS_BUY_ICON]: `/svgs/bonusBuyIcon.svg`,
-        [SvgName.AUTO_SPIN_ICON]: `/svgs/autoSpinIcon.svg`,
         [SvgName.PLAY_ICON]: `/svgs/playIcon.svg`,
         [SvgName.PLAY_ICON_SILVER]: `/svgs/playIconSilver.svg`,
         [SvgName.REPLAY_ICON]: `/svgs/replayIcon.svg`,

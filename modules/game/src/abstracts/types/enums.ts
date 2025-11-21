@@ -59,8 +59,6 @@ export enum ImageName {
 }
 
 export enum SvgName {
-    BONUS_BUY_ICON = `bonusBuyIcon`,
-    AUTO_SPIN_ICON = `autoSpinIcon`,
     PLAY_ICON = `playIcon`,
     PLAY_ICON_SILVER = `playIconSilver`,
     REPLAY_ICON = `replayIcon`,
