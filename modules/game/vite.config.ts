@@ -21,5 +21,5 @@ export default defineConfig({
       '@game': path.resolve(__dirname, './src')
     }
   },
-  publicDir: '../common/media'
+  publicDir: path.resolve(__dirname, '../common/media')
 });
