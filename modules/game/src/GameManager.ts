@@ -242,97 +242,8 @@ export class GameManager implements IGameManager {
 
         this.app.stage.addChild(this.modules.sound);
 
-        const handleFullscreenResize = () => {
-            resizeCanvas();
-        };
-
-        // Detect if we're on a mobile device
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-        
-        // Listen to all fullscreen change events (including vendor-prefixed)
-        document.addEventListener("fullscreenchange", handleFullscreenResize);
-        document.addEventListener("webkitfullscreenchange", handleFullscreenResize);
-        document.addEventListener("mozfullscreenchange", handleFullscreenResize);
-        document.addEventListener("MSFullscreenChange", handleFullscreenResize);
-
-        // Handle orientation changes on mobile
-        window.addEventListener("orientationchange", () => {
-            setTimeout(handleFullscreenResize, 100);
-        });
-
-        // Handle screen resize events for mobile browsers
-        let resizeTimeout: number;
-        window.addEventListener("resize", () => {
-            clearTimeout(resizeTimeout);
-            resizeTimeout = window.setTimeout(handleFullscreenResize, 100);
-        });
-
-        // For mobile devices, attempt fullscreen on first interaction
-        canvas.addEventListener(
-            "pointerdown",
-            () => {
-                goFullscreen();
-            },
-            { once: true }
-        );
-
-        function goFullscreen() {
-            // For iOS devices, we can't use the Fullscreen API
-            // Instead, we rely on the viewport meta tags and CSS
-            if (isIOS) {
-                // Scroll to top to hide the address bar
-                window.scrollTo(0, 1);
-                setTimeout(() => window.scrollTo(0, 0), 0);
-                
-                // Try to lock orientation if available
-                if (screen.orientation && (screen.orientation as any).lock) {
-                    (screen.orientation as any).lock('landscape').catch(() => {
-                        // Orientation lock failed, continue anyway
-                    });
-                }
-                
-                // Force resize after attempting fullscreen
-                setTimeout(handleFullscreenResize, 100);
-                return;
-            }
-
-            // For Android and desktop browsers, try the Fullscreen API
-            const el = document.documentElement;
-
-            // Try standard fullscreen API
-            if (el.requestFullscreen) {
-                el.requestFullscreen().catch((err) => {
-                    console.log("Fullscreen request failed:", err);
-                    // Fallback for mobile: hide address bar
-                    if (isMobile) {
-                        window.scrollTo(0, 1);
-                        setTimeout(() => window.scrollTo(0, 0), 0);
-                    }
-                });
-            }
-            // Webkit (Safari, older Chrome/Android)
-            else if ((el as any).webkitRequestFullscreen) {
-                try {
-                    (el as any).webkitRequestFullscreen();
-                } catch (err) {
-                    console.log("Webkit fullscreen failed:", err);
-                }
-            }
-            // IE/Edge
-            else if ((el as any).msRequestFullscreen) {
-                (el as any).msRequestFullscreen();
-            }
-            // Mozilla
-            else if ((el as any).mozRequestFullScreen) {
-                (el as any).mozRequestFullScreen();
-            }
-            // Fallback: hide address bar on mobile
-            else if (isMobile) {
-                window.scrollTo(0, 1);
-                setTimeout(() => window.scrollTo(0, 0), 0);
-            }
-        }
+        //handle full screen
+        this.setupFullscreen(canvasParent, resizeCanvas);
     }
 
     protected getAssetsConfig() {
@@ -372,6 +283,131 @@ export class GameManager implements IGameManager {
         console.log(`%cGameManager: starting with userID: ${userId}`, this.getConsoleLogStyle());
 
         await this.initialize();
+    }
+
+    protected setupFullscreen(element: HTMLElement, resizeCallback: () => void): void {
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+            navigator.userAgent
+        );
+
+        // Request fullscreen function that works across browsers
+        const requestFullscreen = () => {
+            const elem = element;
+
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen().catch((err) => {
+                    console.warn("Fullscreen request failed:", err);
+                });
+            } else if ((elem as any).webkitRequestFullscreen) {
+                // iOS Safari and older webkit browsers
+                (elem as any).webkitRequestFullscreen();
+            } else if ((elem as any).mozRequestFullScreen) {
+                // Firefox
+                (elem as any).mozRequestFullScreen();
+            } else if ((elem as any).msRequestFullscreen) {
+                // IE/Edge
+                (elem as any).msRequestFullscreen();
+            }
+        };
+
+        // Exit fullscreen function
+        const exitFullscreen = () => {
+            if (document.exitFullscreen) {
+                document.exitFullscreen().catch((err) => {
+                    console.warn("Exit fullscreen failed:", err);
+                });
+            } else if ((document as any).webkitExitFullscreen) {
+                (document as any).webkitExitFullscreen();
+            } else if ((document as any).mozCancelFullScreen) {
+                (document as any).mozCancelFullScreen();
+            } else if ((document as any).msExitFullscreen) {
+                (document as any).msExitFullscreen();
+            }
+        };
+
+        // Check if already in fullscreen
+        const isFullscreen = () => {
+            return !!(
+                document.fullscreenElement ||
+                (document as any).webkitFullscreenElement ||
+                (document as any).mozFullScreenElement ||
+                (document as any).msFullscreenElement
+            );
+        };
+
+        // Toggle fullscreen
+        const toggleFullscreen = () => {
+            if (isFullscreen()) {
+                exitFullscreen();
+            } else {
+                requestFullscreen();
+            }
+        };
+
+        // Listen for fullscreen changes
+        const handleFullscreenChange = () => {
+            console.log(
+                `%cGameManager: Fullscreen changed: ${isFullscreen()}`,
+                this.getConsoleLogStyle()
+            );
+            // Trigger resize when entering/exiting fullscreen
+            setTimeout(() => resizeCallback(), 100);
+        };
+
+        document.addEventListener("fullscreenchange", handleFullscreenChange);
+        document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+        document.addEventListener("mozfullscreenchange", handleFullscreenChange);
+        document.addEventListener("MSFullscreenChange", handleFullscreenChange);
+
+        // Handle orientation changes (important for mobile)
+        const handleOrientationChange = () => {
+            console.log(`%cGameManager: Orientation changed`, this.getConsoleLogStyle());
+            // Delay resize to allow browser to update dimensions
+            setTimeout(() => resizeCallback(), 200);
+        };
+
+        window.addEventListener("orientationchange", handleOrientationChange);
+        window
+            .matchMedia("(orientation: portrait)")
+            .addEventListener("change", handleOrientationChange);
+
+        // For mobile: immediately request fullscreen on first touch/click
+        if (isMobile) {
+            const initiateFullscreen = () => {
+                console.log(
+                    `%cGameManager: Mobile first interaction - requesting fullscreen`,
+                    this.getConsoleLogStyle()
+                );
+                requestFullscreen();
+            };
+
+            // Use capture phase to ensure we catch it first
+            element.addEventListener("touchstart", initiateFullscreen, {
+                once: true,
+                capture: true
+            });
+            element.addEventListener("click", initiateFullscreen, { once: true, capture: true });
+        }
+
+        // For desktop: single-click to toggle fullscreen
+        if (!isMobile) {
+            element.addEventListener("click", (e: MouseEvent) => {
+                e.preventDefault();
+                console.log(
+                    `%cGameManager: Click detected - toggling fullscreen`,
+                    this.getConsoleLogStyle()
+                );
+                toggleFullscreen();
+            });
+        }
+
+        // Store reference for potential external access
+        (globalThis as any).__TOGGLE_FULLSCREEN__ = toggleFullscreen;
+
+        console.log(
+            `%cGameManager: Fullscreen setup complete (${isMobile ? "mobile" : "desktop"} mode)`,
+            this.getConsoleLogStyle()
+        );
     }
 
     protected getConsoleLogStyle(): string {
