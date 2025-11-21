@@ -38,6 +38,15 @@ jobs:
           cd modules/game
           npm run build
 
+      - name: List build output
+        run: |
+          echo "Listing dist folder contents:"
+          ls -la modules/game/dist/
+          echo "Checking for media files:"
+          ls -la modules/game/dist/svgs/ || echo "No svgs folder"
+          ls -la modules/game/dist/images/ || echo "No images folder"
+          ls -la modules/game/dist/sounds/ || echo "No sounds folder"
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
